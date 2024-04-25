@@ -108,6 +108,7 @@ export async function mainHandler(
 export function generateUrlSafeId(len = 21, prefix = ""): string {
   return prefix + nanoid(len);
 }
+
 interface NestedObject {
   [key: string]: any;
 }

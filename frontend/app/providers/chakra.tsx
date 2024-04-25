@@ -22,7 +22,7 @@ export const theme = extendTheme({
         // color: "gray.600",
         // lineHeight: "tall",
       },
-      a: {
+      "a": {
         color: "gs-yellow.400",
       },
     },
