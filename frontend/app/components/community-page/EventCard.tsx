@@ -10,8 +10,14 @@ import {
 } from "@chakra-ui/react";
 import { Link } from "@chakra-ui/next-js";
 import { useGetCommunitiesQuery } from "@/state/services";
-export default function EventCards({ spaceIdOrId,event }: { spaceIdOrId: string; event:any}) {
- 
+import MarkdownRenderer from "@/components/MarkdownRenderer";
+export default function EventCards({
+  spaceIdOrId,
+  event,
+}: {
+  spaceIdOrId: string;
+  event: any;
+}) {
   const tagStyles = {
     px: 2,
     rounded: "sm",
@@ -47,7 +53,7 @@ export default function EventCards({ spaceIdOrId,event }: { spaceIdOrId: string;
       <Stack flex={1}>
         <Heading size={"md"}>{event?.title}</Heading>
         <Box>
-         <MarkdownRenderer markdown={event?.details}>
+          <MarkdownRenderer markdown={shortenText(event?.details, 150)} />
         </Box>
         <Box>
           <HStack>

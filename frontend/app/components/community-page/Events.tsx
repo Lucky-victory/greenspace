@@ -19,12 +19,12 @@ export default function Events({ spaceIdOrId }: { spaceIdOrId: string }) {
         Events
       </Heading>
       <Stack gap={5}>
-        {isLoading || (isFetching && [0, 0, 0].map((_, i) => <CardLoading />))}
+        {isLoading || (isFetching && [0, 0, 0].map((_, i) => <CardLoading key={'evt-loading'+i} />))}
         {!isLoading &&
           !isFetching &&
           !isEmpty(events) &&
           events.map((event, i) => (
-            <EventCard spaceIdOrId={spaceIdOrId} key={i} event={event} />
+            <EventCard spaceIdOrId={spaceIdOrId} key={'event'+i} event={event} />
           ))}
       </Stack>
     </Box>
