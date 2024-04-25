@@ -11,6 +11,7 @@ import {
 import { Link } from "@chakra-ui/next-js";
 import { useGetCommunitiesQuery } from "@/state/services";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { shortenText } from "@/utils";
 export default function EventCards({
   spaceIdOrId,
   event,
