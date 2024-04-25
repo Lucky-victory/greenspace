@@ -15,17 +15,17 @@ const MAX_CHARACTER_LENGTH = 100;
 const ArticleCard = ({ article }: { article: Article | Partial<Article> }) => {
   return (
     <LinkBox
-      _hover={{ bg: "white", shadow: "md" }}
+      _hover={{ bg: "gray.700", shadow: "md" }}
       display={"flex"}
       flexDir={"column"}
       gap={"2"}
-      maxW={"350px"}
+      maxW={"340px"}
       rounded={"md"}
       p={"2"}
       pb={4}
       minW={"250px"}
       border={"1px"}
-      borderColor={"gray.300"}
+      borderColor={"gray.600"}
     >
       <Image
         alt=""
@@ -40,7 +40,7 @@ const ArticleCard = ({ article }: { article: Article | Partial<Article> }) => {
         <Heading
           as={"h3"}
           size={"md"}
-          color={"primaryColor.800"}
+          color={"gs-yellow.400"}
           _hover={{ textDecor: "underline" }}
         >
           {article?.title}

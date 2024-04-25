@@ -1,9 +1,8 @@
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Footer from "@/components/Footer";
 import { HeaderNav } from "@/components/HeaderNav";
-import { maskHexAddress } from "@/helpers";
+import { maskHexAddress, resolveIPFSURI } from "@/helpers";
 import { useGetArticleQuery } from "@/state/services";
-import { Article } from "@/types/shared";
 import {
   Box,
   HStack,
@@ -16,14 +15,11 @@ import {
   Skeleton,
   SkeletonText,
   SkeletonCircle,
-  VStack,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import isEmpty from "just-is-empty";
 import Head from "next/head";
-import { usePathname, useParams } from "next/navigation";
 import { useRouter } from "next/router";
-import { useState } from "react";
 
 const ArticleView = () => {
   const router = useRouter();
@@ -44,12 +40,15 @@ const ArticleView = () => {
         <meta property="og:type" content="article" />
         <meta
           property="og:url"
-          content={`https://rejuvenate-ai/blog/${article?.slug}`}
+          content={`https://greenspacedao.xyz/blog/${article?.slug}`}
         />
-        <meta property="og:image" content={article?.image} />
+        <meta
+          property="og:image"
+          content={article?.image}
+        />
       </Head>
       <HeaderNav />
-      <Box bg={"gray.800"} py={8}>
+      <Box py={8}>
         <Box
           // bg={"white"}
           maxW={"1200px"}
@@ -72,7 +71,7 @@ const ArticleView = () => {
                 </Skeleton>
                 <HStack
                   borderY={"1px"}
-                  borderColor={"gray.300"}
+                  borderColor={"gray.600"}
                   my={4}
                   py={2}
                   spacing={"4"}
@@ -87,8 +86,9 @@ const ArticleView = () => {
                     ></SkeletonCircle>
                   ) : (
                     <Avatar
+                      bg={"gray.700"}
                       size={"lg"}
-                      name="0x4de54a23f34d3es29"
+                      name={article?.author?.fullName}
                       src={article?.author?.avatar}
                     />
                   )}
@@ -107,7 +107,7 @@ const ArticleView = () => {
                         as={"time"}
                         fontWeight={"medium"}
                         fontSize={"sm"}
-                        color={"gray.600"}
+                        color={"gray.300"}
                       >
                         {article &&
                           format(
@@ -122,7 +122,7 @@ const ArticleView = () => {
                   isLoaded={!isLoading && !isFetching && !isEmpty(article)}
                 >
                   {article?.intro && (
-                    <Text color={"gray.600"} fontSize={"18px"} mb={1}>
+                    <Text color={"gray.300"} fontSize={"18px"} mb={1}>
                       {article?.intro}
                     </Text>
                   )}
@@ -131,12 +131,15 @@ const ArticleView = () => {
             </Stack>
           </Box>
           <Skeleton isLoaded={!isLoading && !isFetching && !isEmpty(article)}>
-            <Box>
+            <Box my={5}>
               <Image
                 w={"full"}
-                bg={"gray.100"}
+                bg={"gray.900"}
                 alt=""
-                src={article?.image || "/images/placeholder-image.png"}
+                src={
+                  article?.image ||
+                  "/images/placeholder-image.png"
+                }
                 h={"auto"}
                 // maxH={{ lg: 500, base: 400 }}
                 // objectFit={'contain'}

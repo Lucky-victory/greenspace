@@ -23,6 +23,9 @@ import { NewArticle, PostStatus } from "@/types/shared";
 import { useAddArticleMutation } from "@/state/services";
 import { shortenText } from "@/utils";
 import { useAppContext } from "@/context/state";
+import { useAuth } from "@/hooks";
+import { useStorageUpload } from "@thirdweb-dev/react";
+import { resolveIPFSURI } from "@/helpers";
 
 export default function NewPostPage() {
   const [addArticle, { isLoading, status, isSuccess, isError, data }] =
@@ -35,8 +38,12 @@ export default function NewPostPage() {
     status: "success",
     title: " Successful",
   });
-  const { user } = useAppContext();
+  const { user } = useAuth();
+
+  const { mutateAsync: uploadToThirdWeb } = useStorageUpload();
   const [imageFile, setImageFile] = useState<string>();
+
+  const [coverImageFile, setCoverImageFile] = useState<File>();
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [contentValue, setContentValue] = useState("");
   const [post, setPost] = useState<NewArticle>({
@@ -46,50 +53,57 @@ export default function NewPostPage() {
     intro: "",
     image: "",
     status: "draft",
-    authId: user?.userAddress || "0xed65da3exd8fe888dce89834ae",
+    userId: user?.authId!,
   });
 
   const [selectedTab, setSelectedTab] = useState<"write" | "preview">("write");
   const onImageChangeHandler = useCallback(
     (hasImage: boolean, files: File[], image: string) => {
       if (hasImage) {
-        // setPost((prev) => ({ ...prev, image: image }));
         setImageFile(image);
-        // const reader = new FileReader();
-
-        //         reader.onload = function (e) {
-        //           const base64String = e.target?.result as string;
-
-        //           setPost((prev) => ({ ...prev, image: base64String }));
-        //         };
-        //         reader.readAsDataURL(files[0]);
+        setCoverImageFile(files[0]);
       }
     },
     []
   );
-  function saveAsDraft() {
+  const handleFileUpload = async () => {
     try {
+      const [fileUri] = await uploadToThirdWeb({ data: [coverImageFile] });
+
+      return resolveIPFSURI(fileUri);
+    } catch (error) {}
+  };
+  async function saveAsDraft() {
+    try {
+      let imageUrl = "";
+      if (coverImageFile) {
+        imageUrl = (await handleFileUpload())!;
+      }
       const postToSave = {
         ...post,
         slug: generateSlug(post.title),
-        image: imageFile,
+        image: imageUrl,
       };
 
-      addArticle(postToSave);
+      await addArticle(postToSave).unwrap();
     } catch (error) {
       toast({ title: "An error occurred, please try again", status: "error" });
     }
   }
-  function saveAsPublished() {
+  async function saveAsPublished() {
     try {
+      let imageUrl = "";
+      if (coverImageFile) {
+        imageUrl = (await handleFileUpload())!;
+      }
       const postToSave = {
         ...post,
         status: "published" as PostStatus,
         slug: generateSlug(post.title),
-        image: imageFile,
+        image: imageUrl,
       };
 
-      addArticle(postToSave);
+      await addArticle(postToSave).unwrap();
     } catch (error) {
       toast({ title: "An error occurred, please try again", status: "error" });
     }
@@ -113,12 +127,13 @@ export default function NewPostPage() {
       intro: "",
       image: "",
       status: "draft",
-      authId: user?.userAddress || "0xed65da3exd8fe888dce89834ae",
+      userId: user?.authId!,
     });
     setContentValue("");
     setImageFile(undefined);
   }
 
+  // First useEffect
   useEffect(() => {
     let timeoutId: string | number | NodeJS.Timeout;
     if (isSuccess) {
@@ -129,8 +144,17 @@ export default function NewPostPage() {
       }, 2000);
     }
     return () => clearTimeout(timeoutId);
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.message, isSuccess]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, data?.message]);
+
+  useEffect(() => {
+    setPost((prev) => ({
+      ...prev,
+      content: contentValue,
+      userId: user?.authId!,
+    }));
+  }, [contentValue, user?.authId]);
+
   return (
     <>
       <NutritionistDashboardLayout>
@@ -181,6 +205,7 @@ export default function NewPostPage() {
                 onChange={handleInputChange}
                 h={"auto"}
                 py={2}
+                autoComplete="off"
                 placeholder="Post Title..."
                 fontSize={"x-large"}
                 fontWeight={"medium"}
@@ -188,6 +213,7 @@ export default function NewPostPage() {
               <Textarea
                 name="intro"
                 value={post.intro}
+                autoComplete="off"
                 onChange={handleInputChange}
                 my={4}
                 maxH={"200px"}

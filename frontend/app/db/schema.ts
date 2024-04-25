@@ -102,20 +102,26 @@ export const fitnessPlans = mysqlTable(
 );
 export const nutritionists = mysqlTable("Nutritionists", {
   bio: varchar("bio", { length: 255 }),
-  location: varchar("location", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  country: varchar("country", { length: 255 }),
   id: int("id").autoincrement().primaryKey(),
   username: varchar("username", { length: 50 })
     .unique()
-
     .$defaultFn(() => generateUsername("GN_")),
   userType: mysqlEnum("user_type", ["member", "nutritionist"])
     .default("nutritionist")
     .notNull(),
+  sex: mysqlEnum("sex", ["male", "female", "other"]),
+  birthDate: datetime("birth_date"),
   fullName: varchar("full_name", { length: 255 }),
   avatar: varchar("avatar", { length: 255 }),
   authId: varchar("auth_id", { length: 255 }).$defaultFn(generateUrlSafeId),
   emailVerified: boolean("email_verified").default(false),
-  isVerified: boolean("is_verified").default(false),
+  verificationStatus: mysqlEnum("verification_status", [
+    "verified",
+    "pending",
+    "rejected",
+  ]).default("pending"),
   updatedAt: timestamp("updated_at").onUpdateNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -177,8 +183,8 @@ export const meetings = mysqlTable(
     meetId: varchar("meet_id", { length: 255 }).$defaultFn(() =>
       generateUrlSafeId(14)
     ),
-    startTime: timestamp("start_time"),
-    endTime: timestamp("end_time"),
+    startTime: datetime("start_time"),
+    endTime: datetime("end_time"),
     roomId: varchar("room_id", { length: 100 }).notNull(),
     userId: varchar("user_id", { length: 255 }),
     createdAt: timestamp("created_at").defaultNow(),
@@ -211,15 +217,16 @@ export const communities = mysqlTable("Communities", {
 export const communityMessages = mysqlTable("CommunityMessages", {
   id: int("id").autoincrement().primaryKey(),
   communityId: int("community_id"),
-  userId: int("user_id"),
-  message: text("message"),
+  userId: varchar("user_id", { length: 255 }),
+  message: mediumtext("message"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 });
-export const messageAttachment = mysqlTable("MessageAttachments", {
+export const messageAttachments = mysqlTable("MessageAttachments", {
   id: int("id").autoincrement().primaryKey(),
   messageId: int("message_id"),
   content: text("content"),
+  type: varchar("type", { length: 20 }),
 });
 export const communityEvents = mysqlTable("CommunityEvents", {
   id: int("id").autoincrement().primaryKey(),
@@ -230,8 +237,8 @@ export const communityEvents = mysqlTable("CommunityEvents", {
   ),
   coverImage: mediumtext("cover_image"),
   communityId: int("community_id"),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
+  startDate: datetime("start_date"),
+  endDate: datetime("end_date"),
   venue: varchar("venue", {
     enum: ["online", "in-person"],
     length: 255,
@@ -249,8 +256,8 @@ export const communityChallenges = mysqlTable("CommunityChallenges", {
   details: mediumtext("details"),
   coverImage: mediumtext("cover_image"),
   communityId: int("community_id"),
-  startDate: timestamp("start_date"),
-  endDate: timestamp("end_date"),
+  startDate: datetime("start_date"),
+  endDate: datetime("end_date"),
   venue: varchar("venue", {
     enum: ["online", "in-person"],
     length: 255,
@@ -259,23 +266,24 @@ export const communityChallenges = mysqlTable("CommunityChallenges", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 });
-export const communityMembers = mysqlTable("communityMembers", {
+export const communityMembers = mysqlTable("CommunityMembers", {
   id: int("id").autoincrement().primaryKey(),
   communityId: int("community_id"),
-  userId: int("user_id"),
+  userId: varchar("user_id", { length: 255 }),
   role: mysqlEnum("role", ["moderator", "admin", "member"]).default("member"),
   xp: int("xp").default(0),
+  joinedOn: timestamp("joined_on").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 });
-export const communityEventsTags = mysqlTable("communityEventsTags", {
+export const communityEventsTags = mysqlTable("CommunityEventsTags", {
   id: int("id").autoincrement().primaryKey(),
   eventId: int("event_id"),
   name: varchar("name", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").onUpdateNow(),
 });
-export const communityChallengesTags = mysqlTable("communityChallengesTags", {
+export const communityChallengesTags = mysqlTable("CommunityChallengesTags", {
   id: int("id").autoincrement().primaryKey(),
   challengeId: int("challenges_id"),
   name: varchar("name", { length: 50 }),
@@ -317,9 +325,9 @@ export const appointmentsRelations = relations(
       fields: [appointments.requestedBy],
       references: [users.authId],
     }),
-    nutritionist: one(users, {
+    nutritionist: one(nutritionists, {
       fields: [appointments.nutritionistId],
-      references: [users.authId],
+      references: [nutritionists.authId],
     }),
   })
 );
@@ -337,12 +345,38 @@ export const communityChallengesRelations = relations(
   communityChallenges,
   ({ one, many }) => ({
     tags: many(communityChallengesTags),
+    community: one(communities, {
+      fields: [communityChallenges.communityId],
+      references: [communities.id],
+    }),
+  })
+);
+export const communityChallengesTagsRelations = relations(
+  communityChallengesTags,
+  ({ one, many }) => ({
+    challenges: one(communityChallenges, {
+      fields: [communityChallengesTags.challengeId],
+      references: [communityChallenges.id],
+    }),
+  })
+);
+export const communityEventsTagsRelations = relations(
+  communityEventsTags,
+  ({ one, many }) => ({
+    challenges: one(communityEvents, {
+      fields: [communityEventsTags.eventId],
+      references: [communityEvents.id],
+    }),
   })
 );
 export const communityEventsRelations = relations(
   communityEvents,
   ({ one, many }) => ({
     tags: many(communityEventsTags),
+    community: one(communities, {
+      fields: [communityEvents.communityId],
+      references: [communities.id],
+    }),
   })
 );
 export const communityMembersRelations = relations(
@@ -359,7 +393,15 @@ export const communityMembersRelations = relations(
     }),
   })
 );
-
+export const messageAttachmentsRelations = relations(
+  messageAttachments,
+  ({ one, many }) => ({
+    message: one(communityMessages, {
+      fields: [messageAttachments.messageId],
+      references: [communityMessages.id],
+    }),
+  })
+);
 export const communityMessagesRelations = relations(
   communityMessages,
   ({ one, many }) => ({
@@ -367,7 +409,11 @@ export const communityMessagesRelations = relations(
       fields: [communityMessages.userId],
       references: [users.authId],
     }),
-    attachments: many(messageAttachment),
+    community: one(communities, {
+      fields: [communityMessages.communityId],
+      references: [communities.id],
+    }),
+    attachments: many(messageAttachments),
   })
 );
 
