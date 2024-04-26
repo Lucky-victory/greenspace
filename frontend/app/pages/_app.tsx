@@ -19,7 +19,16 @@ import { clusterApiUrl } from "@solana/web3.js";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useMemo } from "react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+
+import type { Session } from "next-auth";
+
+import { WagmiProvider } from "wagmi";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 import AppProviders from "@/providers";
+import { USER_SESSION } from "@/state/types";
 const huddleClient = new HuddleClient({
   projectId: process.env.NEXT_PUBLIC_HUDDLE_PROJECT_ID!,
   options: {
@@ -29,7 +38,12 @@ const huddleClient = new HuddleClient({
     },
   },
 });
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({
+  Component,
+  pageProps,
+}: AppProps<{
+  session: USER_SESSION;
+}>) {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const wallets = useMemo(
