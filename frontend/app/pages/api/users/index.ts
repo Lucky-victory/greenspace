@@ -27,7 +27,6 @@ export const GET: HTTP_METHOD_CB = async (
     const user = await db.query.users.findMany({
       columns: {
         email: false,
-        password: false,
       },
     });
     return successHandlerCallback(req, res, {
@@ -48,9 +47,6 @@ export const POST: HTTP_METHOD_CB = async (
   try {
     const { authId, email, address, ...data } = req.body;
     const existingUser = await db.query.users.findFirst({
-      columns: {
-        password: false,
-      },
       where: or(
         eq(users.email, email as string),
         eq(users.authId, authId as string),
