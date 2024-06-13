@@ -139,7 +139,7 @@ export const users = mysqlTable(
       .unique()
       .notNull()
       .$defaultFn(generateUsername),
-    password: varchar("password", { length: 255 }),
+    // password: varchar("password", { length: 255 }),
     email: varchar("email", { length: 255 }).unique(),
     address: varchar("address", { length: 100 }).default(""),
     avatar: varchar("avatar", { length: 255 }),

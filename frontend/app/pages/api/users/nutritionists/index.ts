@@ -26,7 +26,6 @@ export const GET: HTTP_METHOD_CB = async (
     const user = await db.query.users.findMany({
       columns: {
         email: false,
-        password: false,
       },
       where: eq(users.userType, "nutritionist"),
     });
